@@ -1,0 +1,16 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.env
+node_modules/

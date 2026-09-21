@@ -1,0 +1,12 @@
+services:
+  vulnerable:
+    build: ./apps/api-vulnerable
+    ports:
+      - "127.0.0.1:8080:8080"
+    command: python app.py
+
+  hardened:
+    build: ./apps/api-hardened
+    ports:
+      - "127.0.0.1:8081:8081"
+    command: python app.py

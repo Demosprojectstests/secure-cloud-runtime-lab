@@ -1,0 +1,21 @@
+name: checkov
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - ".checkov.yml"
+      - ".github/workflows/checkov.yml"
+
+jobs:
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: infra
+          framework: terraform
+          config_file: .checkov.yml
+          soft_fail: false

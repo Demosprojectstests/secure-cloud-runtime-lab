@@ -1,0 +1,36 @@
+- rule: Lab anomalous process in container
+  desc: Unexpected shell or interpreter exec in a container
+  condition: >
+    spawned_process and container
+    and proc.name in (bash, sh, zsh, ash, python, python3, perl, nc, ncat)
+  output: >
+    Anomalous process (user=%user.name proc=%proc.name cmdline=%proc.cmdline
+    container=%container.name image=%container.image.repository)
+  priority: WARNING
+  tags: [lab, process, mitre_execution]
+
+- rule: Lab privilege escalation indicators
+  desc: sudo/su, nsenter, or privileged flags
+  condition: >
+    spawned_process and container
+    and (proc.name in (sudo, su, nsenter, unshare)
+         or proc.cmdline contains "--privileged"
+         or proc.cmdline contains "cap-add")
+  output: >
+    Privilege escalation indicator (user=%user.name cmdline=%proc.cmdline
+    container=%container.name)
+  priority: CRITICAL
+  tags: [lab, privilege_escalation]
+
+- rule: Lab docker or kubelet socket
+  desc: Container touching runtime sockets
+  condition: >
+    (open_read or open_write)
+    and container
+    and (fd.name = /var/run/docker.sock
+         or fd.name contains /var/lib/kubelet)
+  output: >
+    Runtime socket access (user=%user.name fd=%fd.name cmdline=%proc.cmdline
+    container=%container.name)
+  priority: CRITICAL
+  tags: [lab, escape]

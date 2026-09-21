@@ -1,0 +1,12 @@
+tty: true
+driver:
+  kind: modern_ebpf
+falco:
+  grpcEnabled: false
+  json_output: true
+  rules_files:
+    - /etc/falco/falco_rules.yaml
+    - /etc/falco/rules.d/custom-rules.yaml
+customRules:
+  custom-rules.yaml: |
+    # loaded from sibling file in git; helm consumers can paste custom-rules.yaml here

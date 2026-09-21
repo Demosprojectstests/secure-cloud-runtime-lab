@@ -1,0 +1,3 @@
+region      = "us-east-1"
+github_org  = "YOUR_GITHUB_USER"
+github_repo = "secure-cloud-runtime-lab"

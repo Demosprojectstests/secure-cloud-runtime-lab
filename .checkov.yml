@@ -1,0 +1,7 @@
+framework:
+  - terraform
+directory: infra
+compact: true
+quiet: true
+soft_fail: false
+skip-check: []
