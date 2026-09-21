@@ -18,3 +18,4 @@ jobs:
           directory: infra
           framework: terraform
           config_file: .checkov.yml
+          output_format: cli
