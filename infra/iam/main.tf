@@ -1,6 +1,12 @@
 data "aws_caller_identity" "current" {}
 
 resource "aws_iam_policy" "permission_boundary" {
+  # checkov:skip=CKV_AWS_286:PB is a max-permission ceiling, not an identity grant
+  # checkov:skip=CKV_AWS_287:PB is a max-permission ceiling, not an identity grant
+  # checkov:skip=CKV_AWS_288:PB is a max-permission ceiling, not an identity grant
+  # checkov:skip=CKV_AWS_289:PB is a max-permission ceiling, not an identity grant
+  # checkov:skip=CKV_AWS_290:PB is a max-permission ceiling, not an identity grant
+  # checkov:skip=CKV_AWS_355:PB Allow must use * as the ceiling
   name        = "${var.project}-boundary"
   description = "Caps every lab role"
 
@@ -8,9 +14,9 @@ resource "aws_iam_policy" "permission_boundary" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "DenyPrivilegeEscalation"
-        Effect   = "Deny"
-        Action   = [
+        Sid    = "DenyPrivilegeEscalation"
+        Effect = "Deny"
+        Action = [
           "iam:CreatePolicyVersion",
           "iam:SetDefaultPolicyVersion",
           "iam:AttachRolePolicy",
@@ -28,8 +34,8 @@ resource "aws_iam_policy" "permission_boundary" {
         }
       },
       {
-        Sid      = "AllowNonAdmin"
-        Effect   = "Allow"
+        Sid    = "AllowNonAdmin"
+        Effect = "Allow"
         NotAction = [
           "account:*",
           "organizations:*"
@@ -121,6 +127,7 @@ resource "aws_iam_role" "github_actions" {
 }
 
 resource "aws_iam_role_policy" "github_actions" {
+  # checkov:skip=CKV_AWS_355:Describe/List cannot be resource-scoped on these APIs
   name = "plan-limited"
   role = aws_iam_role.github_actions.id
 
@@ -128,14 +135,12 @@ resource "aws_iam_role_policy" "github_actions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "ReadForPlan"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "ReadForPlan"
+        Effect = "Allow"
+        Action = [
           "ec2:Describe*",
           "eks:Describe*",
           "eks:List*",
-          "iam:Get*",
-          "iam:List*",
           "logs:Describe*",
           "logs:ListTagsLogGroup"
         ]

@@ -12,6 +12,17 @@ resource "aws_security_group" "cluster" {
   }
 }
 
+resource "aws_kms_key" "eks" {
+  description             = "${var.project} EKS secrets"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "eks" {
+  name          = "alias/${var.project}-eks"
+  target_key_id = aws_kms_key.eks.key_id
+}
+
 resource "aws_eks_cluster" "this" {
   name     = "${var.project}-${var.environment}"
   role_arn = var.cluster_role_arn
@@ -24,7 +35,13 @@ resource "aws_eks_cluster" "this" {
     security_group_ids      = [aws_security_group.cluster.id]
   }
 
-  enabled_cluster_log_types = ["api", "audit", "authenticator"]
+  enabled_cluster_log_types = [
+    "api",
+    "audit",
+    "authenticator",
+    "controllerManager",
+    "scheduler",
+  ]
 
   encryption_config {
     resources = ["secrets"]
@@ -32,19 +49,6 @@ resource "aws_eks_cluster" "this" {
       key_arn = aws_kms_key.eks.arn
     }
   }
-
-  depends_on = [aws_kms_key.eks]
-}
-
-resource "aws_kms_key" "eks" {
-  description             = "${var.project} EKS secrets"
-  deletion_window_in_days = 7
-  enable_key_rotation     = true
-}
-
-resource "aws_kms_alias" "eks" {
-  name          = "alias/${var.project}-eks"
-  target_key_id = aws_kms_key.eks.key_id
 }
 
 resource "aws_eks_node_group" "this" {

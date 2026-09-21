@@ -1,3 +1,6 @@
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
 resource "aws_vpc" "this" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -137,19 +140,45 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = [aws_route_table.private.id, aws_route_table.isolated.id]
 }
 
-data "aws_region" "current" {}
+resource "aws_kms_key" "logs" {
+  description             = "${var.project} vpc flow logs"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
 
-resource "aws_flow_log" "this" {
-  vpc_id               = aws_vpc.this.id
-  traffic_type         = "ALL"
-  log_destination_type = "cloud-watch-logs"
-  log_destination      = aws_cloudwatch_log_group.flow.arn
-  iam_role_arn         = aws_iam_role.flow.arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EnableRoot"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudWatchLogs"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_cloudwatch_log_group" "flow" {
   name              = "/vpc/${var.project}/flow"
   retention_in_days = 14
+  kms_key_id        = aws_kms_key.logs.arn
 }
 
 resource "aws_iam_role" "flow" {
@@ -182,4 +211,12 @@ resource "aws_iam_role_policy" "flow" {
       Resource = "${aws_cloudwatch_log_group.flow.arn}:*"
     }]
   })
+}
+
+resource "aws_flow_log" "this" {
+  vpc_id               = aws_vpc.this.id
+  traffic_type         = "ALL"
+  log_destination_type = "cloud-watch-logs"
+  log_destination      = aws_cloudwatch_log_group.flow.arn
+  iam_role_arn         = aws_iam_role.flow.arn
 }
