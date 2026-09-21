@@ -11,6 +11,14 @@ resource "aws_vpc" "this" {
   }
 }
 
+resource "aws_default_security_group" "this" {
+  vpc_id = aws_vpc.this.id
+
+  tags = {
+    Name = "${var.project}-default-sg-locked"
+  }
+}
+
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
   tags   = { Name = "${var.project}-igw" }
@@ -111,28 +119,6 @@ resource "aws_route_table_association" "isolated" {
   route_table_id = aws_route_table.isolated.id
 }
 
-resource "aws_security_group" "endpoints" {
-  name_prefix = "${var.project}-vpce-"
-  vpc_id      = aws_vpc.this.id
-  description = "VPC interface endpoints"
-
-  ingress {
-    description = "HTTPS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
-
-  egress {
-    description = "HTTPS egress"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
-}
-
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.this.id
   service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
@@ -177,7 +163,7 @@ resource "aws_kms_key" "logs" {
 
 resource "aws_cloudwatch_log_group" "flow" {
   name              = "/vpc/${var.project}/flow"
-  retention_in_days = 14
+  retention_in_days = 365
   kms_key_id        = aws_kms_key.logs.arn
 }
 
